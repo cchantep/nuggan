@@ -14,6 +14,11 @@ import (
 )
 
 var (
+	serverConfig = flag.String("server-config", "server.conf",
+		"If running as standalone server or lambda, path to configuration")
+
+	encodeUrl = flag.String("encode-url", "", "An image URL to be encoded according the 'groupedBaseUrls' setting in the server configuration (e.g. http://image/url/to/be/encoded/according/server-conf)")
+
 	inputUrl = flag.String("in", "", "Url to load")
 	output   = flag.String("out", "output", "File to write out")
 
@@ -23,6 +28,8 @@ var (
 
 func main() {
 	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "\nEncode an URL according a server configuration:\n\n\t%s -server-config server.conf -encode-url 'http://an/image/url'\n", os.Args[0])
+
 		fmt.Fprintf(os.Stderr, "\nScale down an image locally:\n\n\t%s -in 'http://input/image/url' -out '/path/for/output/image' -w scale_down_width_int -h scale_down_height_int\n", os.Args[0])
 
 		fmt.Fprintf(os.Stderr, "\nDetailed options:\n\n")
@@ -31,6 +38,45 @@ func main() {
 	}
 
 	flag.Parse()
+
+	// ---
+
+	if *encodeUrl != "" {
+		f, err := os.Open(*serverConfig)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+				"Fails to open configuration file: %s\n",
+				err.Error())
+
+			flag.Usage()
+
+			return
+		}
+
+		conf, err := nuggan.LoadConfig(f)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+				"Fails to load configuration: %s\n",
+				err.Error())
+
+			flag.Usage()
+
+			return
+		}
+
+		// ---
+
+		encode := nuggan.EncodeMediaUrl(conf)
+		repr := encode(*encodeUrl)
+
+		log.Printf("\nEncode '%s':\n\n\t%s\n\n\te.g. http://localhost:8080/%s/0/0/-/-/-/-/-/%s\n\n", *encodeUrl, repr, conf.RoutePrefix, repr)
+
+		return
+	}
+
+	// ---
 
 	if *inputUrl == "" {
 		log.Fatalf("No input.\r\n\r\n")
