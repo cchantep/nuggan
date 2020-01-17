@@ -14,8 +14,11 @@ import (
 )
 
 var (
+	standaloneServer = flag.String("server", "",
+		"Bind address (e.g. ':8080') to run in standalone server (exclude other options)")
+
 	serverConfig = flag.String("server-config", "server.conf",
-		"If running as standalone server or lambda, path to configuration")
+		"If running as standalone server, path to configuration")
 
 	encodeUrl = flag.String("encode-url", "", "An image URL to be encoded according the 'groupedBaseUrls' setting in the server configuration (e.g. http://image/url/to/be/encoded/according/server-conf)")
 
@@ -28,6 +31,8 @@ var (
 
 func main() {
 	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "\nRun as standalone server:\n\n\t%s -server ':8080' -server-config server.conf\n", os.Args[0])
+
 		fmt.Fprintf(os.Stderr, "\nEncode an URL according a server configuration:\n\n\t%s -server-config server.conf -encode-url 'http://an/image/url'\n", os.Args[0])
 
 		fmt.Fprintf(os.Stderr, "\nScale down an image locally:\n\n\t%s -in 'http://input/image/url' -out '/path/for/output/image' -w scale_down_width_int -h scale_down_height_int\n", os.Args[0])
@@ -38,6 +43,40 @@ func main() {
 	}
 
 	flag.Parse()
+
+	standaloneBind := *standaloneServer
+
+	if standaloneBind != "" {
+		// Start as standalone server
+
+		f, err := os.Open(*serverConfig)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+				"Fails to open configuration file: %s\n",
+				err.Error())
+
+			flag.Usage()
+
+			return
+		}
+
+		conf, err := nuggan.LoadConfig(f)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+				"Fails to load configuration: %s\n",
+				err.Error())
+
+			flag.Usage()
+
+			return
+		}
+
+		nuggan.StandaloneServer(standaloneBind, conf)
+
+		return
+	}
 
 	// ---
 
