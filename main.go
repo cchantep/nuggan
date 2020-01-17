@@ -17,8 +17,10 @@ var (
 	standaloneServer = flag.String("server", "",
 		"Bind address (e.g. ':8080') to run in standalone server (exclude other options)")
 
+	lambda = flag.Bool("lambda", false, "Starts the server as an AWS lambda")
+
 	serverConfig = flag.String("server-config", "server.conf",
-		"If running as standalone server, path to configuration")
+		"If running as standalone server or lambda, path to configuration")
 
 	encodeUrl = flag.String("encode-url", "", "An image URL to be encoded according the 'groupedBaseUrls' setting in the server configuration (e.g. http://image/url/to/be/encoded/according/server-conf)")
 
@@ -33,6 +35,8 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "\nRun as standalone server:\n\n\t%s -server ':8080' -server-config server.conf\n", os.Args[0])
 
+		fmt.Fprintf(os.Stderr, "\nRun as AWS lambda function:\n\n\t%s -lambda -server-config server.conf\n", os.Args[0])
+
 		fmt.Fprintf(os.Stderr, "\nEncode an URL according a server configuration:\n\n\t%s -server-config server.conf -encode-url 'http://an/image/url'\n", os.Args[0])
 
 		fmt.Fprintf(os.Stderr, "\nScale down an image locally:\n\n\t%s -in 'http://input/image/url' -out '/path/for/output/image' -w scale_down_width_int -h scale_down_height_int\n", os.Args[0])
@@ -45,9 +49,10 @@ func main() {
 	flag.Parse()
 
 	standaloneBind := *standaloneServer
+	isLambda := *lambda
 
-	if standaloneBind != "" {
-		// Start as standalone server
+	if standaloneBind != "" || isLambda {
+		// Start as standalone server or lambda
 
 		f, err := os.Open(*serverConfig)
 
@@ -73,7 +78,11 @@ func main() {
 			return
 		}
 
-		nuggan.StandaloneServer(standaloneBind, conf)
+		if standaloneBind != "" {
+			nuggan.StandaloneServer(standaloneBind, conf)
+		} else {
+			nuggan.Lambda(conf)
+		}
 
 		return
 	}
