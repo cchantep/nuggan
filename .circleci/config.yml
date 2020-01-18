@@ -10,7 +10,10 @@ jobs:
 
     steps:
       - checkout
-      - run: mkdir -p $TEST_RESULTS
+
+      - run:
+          name: Prepare working directories
+          command: mkdir -p $TEST_RESULTS
 
       - restore_cache:
           keys:
