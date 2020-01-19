@@ -134,3 +134,18 @@ Then to execute the incremental build (produces the `nuggan` executable):
 Run the tests:
 
     go test -v nuggan
+
+## Deployment
+
+Nuggan can be easily deployed as a standalone service, on a Cloud Application Platform (e.g. [Heroku](#heroku)), or serverless platform (e.g. [AWS lambda](#aws-lambda)).
+
+It's recommended to access a deployed Nuggan through a [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
+
+### Heroku
+
+It can be deployed as web binary on Heroku.
+
+- Create an Heroku distribution: `./scripts/heroku-dist.sh`
+- [Push to an Heroku app](https://devcenter.heroku.com/articles/git) the content of the created distribution.
+
+*Example at [nuggan.herokuapp.com](https://nuggan.herokuapp.com/optimg/110/700/190/190/128/512/9/_2_L3BvcHRvY2F0X3YyLnBuZw==/image.png)*
