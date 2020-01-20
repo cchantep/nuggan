@@ -15,7 +15,10 @@ import (
 
 var (
 	standaloneServer = flag.String("server", "",
-		"Bind address (e.g. ':8080') to run in standalone server (exclude other options)")
+		"Bind address (e.g. ':8080') to run a standalone net/http server")
+
+	fasthttpServer = flag.String("fast-http", "",
+		"Bind address (e.g. ':8080') to run a standalone fasthttp server")
 
 	lambda = flag.Bool("lambda", false, "Starts the server as an AWS lambda")
 
@@ -33,7 +36,9 @@ var (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "\nRun as standalone server:\n\n\t%s -server ':8080' -server-config server.conf\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nRun as standalone net/http server:\n\n\t%s -server ':8080' -server-config server.conf\n", os.Args[0])
+
+		fmt.Fprintf(os.Stderr, "\nRun as standaline fasthttp server:\n\n\t%s -fast-http ':8080' -server-config server.conf\n", os.Args[0])
 
 		fmt.Fprintf(os.Stderr, "\nRun as AWS lambda function:\n\n\t%s -lambda -server-config server.conf\n", os.Args[0])
 
@@ -49,9 +54,10 @@ func main() {
 	flag.Parse()
 
 	standaloneBind := *standaloneServer
+	fasthttpBind := *fasthttpServer
 	isLambda := *lambda
 
-	if standaloneBind != "" || isLambda {
+	if standaloneBind != "" || fasthttpBind != "" || isLambda {
 		// Start as standalone server or lambda
 
 		f, err := os.Open(*serverConfig)
@@ -80,6 +86,8 @@ func main() {
 
 		if standaloneBind != "" {
 			nuggan.StandaloneServer(standaloneBind, conf)
+		} else if fasthttpBind != "" {
+			nuggan.FasthttpServer(fasthttpBind, conf)
 		} else {
 			nuggan.Lambda(conf)
 		}
@@ -127,7 +135,7 @@ func main() {
 	// ---
 
 	if *inputUrl == "" {
-		log.Fatalf("No input.\r\n\r\n")
+		log.Printf("ERROR: No input.\r\n\r\n")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -137,7 +145,7 @@ func main() {
 	err := cliScaleDown(*inputUrl, *output, *width, *height)
 
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Printf(err.Error())
 		os.Exit(2)
 	}
 
