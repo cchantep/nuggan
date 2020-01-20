@@ -13,12 +13,11 @@ type HttpUrl = string
 type Config struct {
 	GroupedBaseUrls [][]HttpUrl
 	RoutePrefix     string // defaulted to '/optimg' is missing
+	Strict          bool
 }
 
 func (c Config) String() string {
-	return fmt.Sprintf("{ GroupedBaseUrls: %v, RoutePrefix: %s }",
-		c.GroupedBaseUrls,
-		c.RoutePrefix)
+	return fmt.Sprintf("{ GroupedBaseUrls: %v, RoutePrefix: %s, Struct: %v }", c.GroupedBaseUrls, c.RoutePrefix, c.Strict)
 }
 
 func LoadConfig(reader io.Reader) (Config, error) {

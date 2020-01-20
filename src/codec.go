@@ -89,7 +89,7 @@ func DecodeMediaUrl(config Config) func(string) (string, error) {
 			}
 
 			if prefix == -1 {
-				return "", errors.New(fmt.Sprintf("Invalid base64Url '%s': second '_' separator expected after group index", repr))
+				return "", errors.New(fmt.Sprintf("Invalid base64Ref '%s': second '_' separator expected after group index", repr))
 			}
 		}
 

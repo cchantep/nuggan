@@ -106,7 +106,7 @@ func TestDecodeMediaUrlNoGroup(t *testing.T) {
 func TestDecodeMediaUrlMissingSeparator(t *testing.T) {
 	_, err := decode1("_1L29jdGljb25zLzEwMjQvbWFyay1naXRodWItNTEyLnBuZw==")
 
-	expected := "Invalid base64Url '_1L29jdGljb25zLzEwMjQvbWFyay1naXRodWItNTEyLnBuZw==': second '_' separator expected after group index"
+	expected := "Invalid base64Ref '_1L29jdGljb25zLzEwMjQvbWFyay1naXRodWItNTEyLnBuZw==': second '_' separator expected after group index"
 
 	if err == nil || err.Error() != expected {
 		t.Error("Error must be raised for missing '_' separator")

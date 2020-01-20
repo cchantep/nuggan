@@ -30,9 +30,9 @@ type ImageResponse struct {
 
 // Routes:
 //
-//   HEAD /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Url
+//   HEAD /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
 //
-//   GET  /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Url
+//   GET  /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
 //
 func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 	decodeMediaUrl := DecodeMediaUrl(conf)
@@ -47,6 +47,17 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 			return
 		} else {
 			log.Printf("INFO: Serving /%s: %s\n", path[1], path[2:])
+
+			base64Ref := path[9]
+
+			if !strings.HasPrefix(base64Ref, "_") && conf.Strict {
+				msg := fmt.Sprintf("Base64url '%s' cannot be specified in strict mode", base64Ref)
+
+				forbidden(resp, msg)
+				return
+			}
+
+			// ---
 
 			// crop x offset (mandatory)
 			x, err := strconv.Atoi(path[2])
@@ -161,8 +172,7 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 			}
 
 			// media
-			base64Url := path[9]
-			mediaUrl, err := decodeMediaUrl(base64Url)
+			mediaUrl, err := decodeMediaUrl(base64Ref)
 
 			if err != nil {
 				writeError(resp, err)
@@ -186,7 +196,7 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 
 			if status == 404 {
 				msg := fmt.Sprintf(
-					"Media not found: %s", base64Url)
+					"Media not found: %s", base64Ref)
 
 				imageNotFound(
 					req.Referer,
@@ -201,7 +211,7 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 			if status != 200 {
 				msg := fmt.Sprintf(
 					"Fails to fetch media '%s': %d",
-					base64Url, status)
+					base64Ref, status)
 
 				imageNotFound(
 					req.Referer,
@@ -214,7 +224,7 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 			}
 
 			// Prepare headers
-			origEtag := base64Url
+			origEtag := base64Ref
 
 			for name, vs := range imgResp.Header {
 				for _, v := range vs {
@@ -266,7 +276,7 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 			resp.SetHeader(
 				"Content-Disposition",
 				fmt.Sprintf("inline; filename=\"%s%s\"",
-					base64Url, imgFmt.OutputExt()))
+					base64Ref, imgFmt.OutputExt()))
 
 			// Output image on response
 			var rerr error = nil
@@ -359,6 +369,16 @@ func badRequest(resp *ImageResponse, msg string) {
 	resp.SetStatusCode(400)
 
 	log.Printf("WARNING: Bad request: %s\n", msg)
+
+	resp.SetHeader("Content-Type", "text/plain")
+
+	fmt.Fprintf(resp.Body, msg)
+}
+
+func forbidden(resp *ImageResponse, msg string) {
+	resp.SetStatusCode(403)
+
+	log.Printf("WARNING: Forbidden: %s\n", msg)
 
 	resp.SetHeader("Content-Type", "text/plain")
 

@@ -18,7 +18,7 @@ Run as a standalone HTTP service on port `8080` (see [Configuration](#configurat
 
 Then images available through configured based URL are served: e.g. http://localhost:8080/optimg/0/0/-/-/-/-/-/_1_L2ZvbGxvdy10aGUtaGVyZC81MTIvZ2l0aHViX3JpZ2h0LTUxMi5wbmc=/image.png
 
-The original image is resolved according the given `base64Url` (in previous example `_1_L2ZvbGxvdy10aGUtaGVyZC81MTIvZ2l0aHViX3JpZ2h0LTUxMi5wbmc=`; see [`codec` acceptances](./src/codec_test.go)).
+The original image is resolved according the given `base64Ref` (in previous example `_1_L2ZvbGxvdy10aGUtaGVyZC81MTIvZ2l0aHViX3JpZ2h0LTUxMi5wbmc=`; see [`codec` acceptances](./src/codec_test.go)).
 
 The original image is first cropped, if there is any crop parameter (otherwise cropped image = original image), then the service eventually resizes (if resize parameters are specified) the cropped image.
 
@@ -55,13 +55,18 @@ groupedBaseUrls = [
   ]
 ]
 routePrefix = "optimg" # default prefix
+strict = true # default false
 ```
+
+- `groupedBaseUrls`: A list of group of URLs, each group of URLs specifying the base URLs corresponding to a same image source.
+- `routePrefix`: The prefix for the HTTP image API (default: `optimg`).
+- `strict`: Strict mode (default: `false`); When enabled, only images from the configured sources (see `groupedBaseUrls`) can be requested.
 
 ### Request format
 
 The service accepts either `GET` or `HEAD` requests, with the following URL format.
 
-    /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Url
+    /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
 
 - `routePrefix`: Any request path prefix (not processed).
 - `cropX`: Crop origin X (mandatory integer >= 0; 0 = left).
@@ -71,6 +76,18 @@ The service accepts either `GET` or `HEAD` requests, with the following URL form
 - `resizeWidth`: Resize width (optional integer >= 0 && <= cropped width OR "-")
 - `resizeHeight`: Resize height (optional integer >= 0 && <= cropped height OR "-").
 - `compressionLevel`: Compression level (optional integer >= 0 OR "-").
+- `base64Ref`: Base64 encoded image reference (see details thereafter); If the strict mode is enabled (see [configuration](#configuration)), then only references corresponding to a configured source (see `groupedBaseUrls` in configuration) is accepted (absolute encoded URL are forbidden in strict mode).
+
+***Image reference encoding:*** (see `base64Ref`)
+
+The reference to a target image must be given as a Base64 encoded string.
+
+- If *strict mode is disabled*, it can be any absolute URL encoded with Base64.
+- If *strict mode is enabled*, it must be of the form `_{groupIndex}_{base64ImagePath}` (e.g. `_2_L3BvcHRvY2F0X3YyLnBuZw==` ; see [examples](#examples)).
+  - `groupIndex`: 0-based index corresponding the URLs group to used from `groupedBaseUrls`
+  - `base64ImagePath`: Base64 encoded image path, that can be appended to any base URL of the specified URLs group to resolve the absolute image URL.
+
+**See [utilities](#utilities)###
 
 #### Examples
 
@@ -106,7 +123,7 @@ The examples bellow correspond to the standalone service executed with the [defa
 
 ### Utilities
 
-Encode an image URL to a base64Url accepted by the service (according the `-server-config`):
+Encode an image URL to a base64Ref accepted by the service (according the `-server-config`):
 
 ```
 ./nuggan -server-config server.conf -encode-url https://octodex.github.com/images/poptocat_v2.png
