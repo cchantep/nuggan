@@ -87,7 +87,7 @@ The reference to a target image must be given as a Base64 encoded string.
   - `groupIndex`: 0-based index corresponding the URLs group to used from `groupedBaseUrls`
   - `base64ImagePath`: Base64 encoded image path, that can be appended to any base URL of the specified URLs group to resolve the absolute image URL.
 
-**See [utilities](#utilities)###
+**See [utilities](#utilities)**
 
 #### Examples
 
