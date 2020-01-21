@@ -247,6 +247,11 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 
 			resp.SetHeader("Etag", strings.Join(etag, "/"))
 
+			if conf.CacheControl != "" {
+				resp.SetHeader(
+					"Cache-Control", conf.CacheControl)
+			}
+
 			// ---
 
 			if req.Method == "HEAD" {

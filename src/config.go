@@ -14,6 +14,7 @@ type Config struct {
 	GroupedBaseUrls [][]HttpUrl
 	RoutePrefix     string // defaulted to '/optimg' is missing
 	Strict          bool
+	CacheControl    string
 }
 
 func (c Config) String() string {
