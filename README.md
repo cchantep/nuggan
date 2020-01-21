@@ -166,3 +166,35 @@ It can be deployed as web binary on Heroku.
 - [Push to an Heroku app](https://devcenter.heroku.com/articles/git) the content of the created distribution.
 
 *Example at [nuggan.herokuapp.com](https://nuggan.herokuapp.com/optimg/110/700/190/190/128/512/9/_2_L3BvcHRvY2F0X3YyLnBuZw==/image.png)*
+
+### AWS Lambda
+
+It can be deployed as a [Go Lambda Handler](https://docs.aws.amazon.com/lambda/latest/dg/go-programming-model.html) on AWS.
+
+- Create a AWS Lambda distribution: `./scripts/aws-lambda-build.sh`
+- In AWS management console, create a new Lambda function.
+  - Function name: *Whatever*
+  - Runtime: `Go 1.x`
+  - Permissions: *Defaults are ok*
+- In the created function, update the *Function code*.
+  - Code entry type: `Upload a .zip file`
+  - Function package: *Select the previously created ZIP distribution*
+  - Handler: `nuggan.sh`
+
+![Configuration of AWS Lambda Function code](docs/images/aws-lambda-cfg1.png)
+
+- Save the function changes.
+
+- In AWS management console, open API gateway.
+- Choose HTTP API (Beta), and build it.
+- In API creation, add integration.
+  - Integration type: `Lambda`
+  - Select the previously created function.
+  - API name: *Whatever*
+- In next screen to create and configure routes, adjust the settings.
+  - Resource path: `/{proxy+}` (forward all requests to the function)
+- In screen to create and configure stages, keep the default values.
+
+![Configuration of AWS HTTP API](docs/images/aws-lambda-cfg2.png)
+
+Finally the service is deployed and accessible.
