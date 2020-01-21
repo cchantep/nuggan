@@ -56,11 +56,13 @@ groupedBaseUrls = [
 ]
 routePrefix = "optimg" # default prefix
 strict = true # default false
+cacheControl = "max-age=7200, s-maxage=21600"
 ```
 
 - `groupedBaseUrls`: A list of group of URLs, each group of URLs specifying the base URLs corresponding to a same image source.
 - `routePrefix`: The prefix for the HTTP image API (default: `optimg`).
 - `strict`: Strict mode (default: `false`); When enabled, only images from the configured sources (see `groupedBaseUrls`) can be requested.
+- `cacheControl`: Optional [`Cache-Control`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) response header.
 
 ### Request format
 

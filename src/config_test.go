@@ -81,6 +81,7 @@ groupedBaseUrls = [
   ]
 ]
 routePrefix = "custom"
+cacheControl = "max-age=3600, s-maxage=7200"
 `))
 
 	if err != nil {
@@ -95,7 +96,8 @@ routePrefix = "custom"
 				"https://upload.wikimedia.org/wikipedia/commons",
 			},
 		},
-		RoutePrefix: "/custom",
+		RoutePrefix:  "/custom",
+		CacheControl: "max-age=3600, s-maxage=7200",
 	}
 
 	if !reflect.DeepEqual(got, expected) {
