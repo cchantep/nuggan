@@ -2,6 +2,8 @@ package nuggan
 
 import (
 	"github.com/davidbyttow/govips/pkg/vips"
+	quant "github.com/ultimate-guitar/go-imagequant"
+	"image/png"
 	"io"
 	"log"
 )
@@ -85,7 +87,7 @@ func Crop(
 // - image: In-memory image reference
 // - width: Resize width; Ignored if > image width.
 // - height: Resize height; Ignored if < 0 or > image height.
-// - compression: Compression level (>= 0);  Ignored if < 0.
+// - compression: Compression level (>= 0 && <= 9);  Ignored if < 0.
 // - output: Result writer
 //
 func ScaleDown(
@@ -126,30 +128,135 @@ func ScaleDown(
 		log.Printf("WARN: Scale defaults to %f: expected width(%f < %f) and height(%f < 0 or < %f)\n", scale, rh, ih, rw, iw)
 	}
 
-	var finalTx *vips.Transform = nil
+	finalTx := imgTx.Scale(scale).StripMetadata()
 
 	if compression > 0 {
 		finalTx = imgTx.Compression(compression)
-	} else {
-		finalTx = imgTx
 	}
 
-	_, _, err3 := finalTx.
-		Scale(scale).
-		StripMetadata().
-		Output(output).
-		Apply()
+	if image.Format() == vips.ImageTypePNG {
+		return pngCompress(finalTx, scale, compression, output)
+	}
 
-	return err3
+	// ---
+
+	_, _, err := finalTx.Output(output).Apply()
+
+	return err
 }
 
 // Only strips image (no other transformation).
-func Strip(image *vips.ImageRef, output io.Writer) error {
-	_, _, err := vips.NewTransform().
-		Image(image).
-		StripMetadata().
-		Output(output).
-		Apply()
+func Strip(image *vips.ImageRef, output io.Writer, compression int) error {
+	imgTx := vips.NewTransform().Image(image).StripMetadata()
+	finalTx := imgTx
+
+	if compression > 0 {
+		finalTx = imgTx.Compression(compression)
+	}
+
+	if image.Format() == vips.ImageTypePNG {
+		return pngCompress(finalTx, 1.0, -1, output)
+	}
+
+	// ---
+
+	_, _, err := finalTx.Output(output).Apply()
 
 	return err
+}
+
+// - imgTx: source transformation, to be outputed to the given writer
+// - output: Result writer
+func pngCompress(
+	imgTx *vips.Transform,
+	scale float64,
+	compression int,
+	output io.Writer) error {
+
+	pr, pw := io.Pipe()
+
+	go func() {
+		defer pw.Close()
+
+		_, _, err := imgTx.Output(pw).Apply()
+
+		if err != nil {
+			log.Printf("ERROR: Fails to transform PNG image: %s\n", err)
+		}
+	}()
+
+	defer pr.Close()
+
+	img, err := png.Decode(pr)
+
+	if err != nil {
+		return err
+	}
+
+	attr, err := quant.NewAttributes()
+
+	if err != nil {
+		return err
+	}
+
+	defer attr.Release()
+
+	/*
+		speed := int(math.Ceil(10.0 - (scale * 9.9)))
+
+		err = attr.SetSpeed(speed)
+
+		if err != nil {
+			return err
+		}
+	*/
+
+	minQuality := 70
+	maxQuality := 90 - (compression * 2)
+
+	//log.Printf("DEBUG: PNG quality = %d-%d\n", minQuality, maxQuality)
+
+	err = attr.SetQuality(minQuality, maxQuality)
+
+	if err != nil {
+		return err
+	}
+
+	rgba32data := string(quant.ImageToRgba32(img))
+	maxBounds := img.Bounds().Max
+
+	qi, err := quant.NewImage(
+		attr, rgba32data, maxBounds.X, maxBounds.Y, 0)
+
+	if err != nil {
+		return err
+	}
+
+	defer qi.Release()
+
+	res, err := qi.Quantize(attr)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Release()
+
+	//log.Printf("DEBUG: PNG effective quality = %f\n", res.GetQuantizationQuality())
+
+	rgb8data, err := res.WriteRemappedImage()
+
+	if err != nil {
+		return err
+	}
+
+	resultImg := quant.Rgb8PaletteToGoImage(
+		res.GetImageWidth(),
+		res.GetImageHeight(),
+		rgb8data,
+		res.GetPalette())
+
+	encoder := &png.Encoder{CompressionLevel: png.DefaultCompression}
+
+	return encoder.Encode(output, resultImg)
 }
