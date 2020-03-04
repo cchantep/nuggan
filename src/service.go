@@ -295,7 +295,8 @@ func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 					resp.Body)
 
 			} else {
-				rerr = Strip(croppedImg, resp.Body)
+				rerr = Strip(
+					croppedImg, resp.Body, compressionLevel)
 			}
 
 			if rerr != nil {
@@ -350,7 +351,7 @@ func imageNotFound(
 	resp.SetHeader("Cache-Control",
 		"public, no-cache, no-store, must-revalidate")
 
-	err4 := Strip(image, resp.Body)
+	err4 := Strip(image, resp.Body, -1)
 
 	if err4 != nil {
 		writeError(resp, err4)
