@@ -3,6 +3,7 @@ package nuggan
 import (
 	"github.com/davidbyttow/govips/pkg/vips"
 	quant "github.com/ultimate-guitar/go-imagequant"
+	"image"
 	"image/png"
 	"io"
 	"log"
@@ -199,8 +200,6 @@ func pngCompress(
 		return err
 	}
 
-	defer attr.Release()
-
 	/*
 		speed := int(math.Ceil(10.0 - (scale * 9.9)))
 
@@ -219,9 +218,46 @@ func pngCompress(
 	err = attr.SetQuality(minQuality, maxQuality)
 
 	if err != nil {
+		attr.Release()
 		return err
 	}
 
+	resultImg, err := quantizePng(&img, attr)
+
+	if err == quant.ErrQualityTooLow {
+		log.Println("WARN: PNG quality too low")
+		attr.Release()
+
+		attr, err := quant.NewAttributes()
+
+		if err != nil {
+			return err
+		}
+
+		r, err := quantizePng(&img, attr)
+
+		if err != nil {
+			attr.Release()
+
+			return err
+		}
+
+		resultImg = r
+	} else if err != nil {
+		attr.Release()
+		return err
+	}
+
+	encoder := &png.Encoder{CompressionLevel: png.DefaultCompression}
+
+	return encoder.Encode(output, resultImg)
+}
+
+func quantizePng(
+	image *image.Image,
+	attr *quant.Attributes,
+) (image.Image, error) {
+	img := *image
 	rgba32data := string(quant.ImageToRgba32(img))
 	maxBounds := img.Bounds().Max
 
@@ -229,7 +265,7 @@ func pngCompress(
 		attr, rgba32data, maxBounds.X, maxBounds.Y, 0)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer qi.Release()
@@ -237,26 +273,22 @@ func pngCompress(
 	res, err := qi.Quantize(attr)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer res.Release()
 
 	//log.Printf("DEBUG: PNG effective quality = %f\n", res.GetQuantizationQuality())
 
-	rgb8data, err := res.WriteRemappedImage()
+	imgBytes, err := res.WriteRemappedImage()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	resultImg := quant.Rgb8PaletteToGoImage(
+	return quant.Rgb8PaletteToGoImage(
 		res.GetImageWidth(),
 		res.GetImageHeight(),
-		rgb8data,
-		res.GetPalette())
-
-	encoder := &png.Encoder{CompressionLevel: png.DefaultCompression}
-
-	return encoder.Encode(output, resultImg)
+		imgBytes,
+		res.GetPalette()), nil
 }
