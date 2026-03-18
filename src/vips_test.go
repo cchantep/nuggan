@@ -4,17 +4,19 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/davidbyttow/govips/pkg/vips"
 	"io"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/davidbyttow/govips/pkg/vips"
 )
 
 func TestScaleDownWidthScale(t *testing.T) {
 	expectedMd5 := []string{
-		"47016225f65d22a44ce804c3523dfa66", // osx
-		"c875a3184d68481c6bef7e765c22a61f", // linux
+		"47016225f65d22a44ce804c3523dfa66", // osx with SSE
+		"c875a3184d68481c6bef7e765c22a61f", // linux with SSE
+		"5577cd0e52bbebbafabb3802f6d10bae", // no-SSE (ARM64 fallback)
 	}
 	inputFile := "image1.jpg"
 
@@ -26,8 +28,9 @@ func TestScaleDownWidthScale(t *testing.T) {
 
 func TestScaleDownHeightScale(t *testing.T) {
 	expectedMd5 := []string{
-		"34d7663f3400ee1a188dca17fa1179fe", // osx
-		"1ad075576225e530e30988633655296a", // linux
+		"34d7663f3400ee1a188dca17fa1179fe", // osx with SSE
+		"1ad075576225e530e30988633655296a", // linux with SSE
+		"ac38512ac98b820e39b4b669321702f4", // no-SSE (ARM64 fallback)
 	}
 	inputFile := "image1.jpg"
 
@@ -39,8 +42,9 @@ func TestScaleDownHeightScale(t *testing.T) {
 
 func TestScaleDownNegativeHeight(t *testing.T) {
 	expectedMd5 := []string{
-		"47016225f65d22a44ce804c3523dfa66", // osx
-		"c875a3184d68481c6bef7e765c22a61f", // linux
+		"47016225f65d22a44ce804c3523dfa66", // osx with SSE
+		"c875a3184d68481c6bef7e765c22a61f", // linux with SSE
+		"5577cd0e52bbebbafabb3802f6d10bae", // no-SSE (ARM64 fallback)
 	}
 	inputFile := "image1.jpg"
 

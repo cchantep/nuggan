@@ -154,20 +154,63 @@ Run the tests:
 
     go test -v nuggan
 
+#### SSE Control (Apple Silicon & Non-SIMD Platforms)
+
+The build system uses a compiler wrapper script (`scripts/cc-sse.sh`) to automatically handle SSE (SIMD) support based on your platform.
+
+**To enable this wrapper, set the `CC` environment variable to the absolute path of the wrapper:**
+
+```sh
+CC="$PWD/scripts/cc-sse.sh" go build
+CC="$PWD/scripts/cc-sse.sh" go test -v nuggan
+```
+
+**How it works:**
+
+- **ARM64 (Apple Silicon, etc.)** — SSE is automatically disabled since ARM64 doesn't support x86 SIMD instructions
+- **x86_64 (Intel/AMD, Linux CI)** — SSE is automatically enabled for optimal performance
+- **Manual override** — Set `NUGGAN_USE_SSE` environment variable to override auto-detection:
+  - `NUGGAN_USE_SSE=0` (or `false`, `no`, `off`) — Explicitly disable SSE
+  - `NUGGAN_USE_SSE=1` (or `true`, `yes`, `on`) — Explicitly enable SSE (may fail on ARM64)
+
+**Example: Build for ARM64 (SSE auto-disabled):**
+
+```sh
+CC="$PWD/scripts/cc-sse.sh" go build
+```
+
+**Example: Explicitly disable SSE (if needed):**
+
+```sh
+NUGGAN_USE_SSE=0 CC="$PWD/scripts/cc-sse.sh" go build
+```
+
+**Example: Run tests with wrapper:**
+
+```sh
+CC="$PWD/scripts/cc-sse.sh" go test -v nuggan
+```
+
+**Note**: Image output differs slightly when SSE is disabled due to different quantization algorithms, but remains deterministic and valid.
+
+On Apple Silicon hosts (or when local libvips setup differs), you can run the CI-like test command in Docker:
+
+  docker run --rm --platform linux/amd64 -v "$PWD":/go/src/github.com/cchantep/nuggan -w /go/src/github.com/cchantep/nuggan cchantep/golang:1.13-vips /bin/sh -lc 'export PATH=/usr/local/go/bin:$PATH; go test -v nuggan'
+
+## Dependency updates
+
+Go dependencies are monitored by Dependabot using [.github/dependabot.yaml](.github/dependabot.yaml).
+
+- Ecosystem: `gomod`
+- Directories: `/` and `/src`
+- Schedule: weekly
+- `github.com/davidbyttow/govips` is intentionally ignored and must be upgraded manually.
+
 ## Deployment
 
-Nuggan can be easily deployed as a standalone service, on a Cloud Application Platform (e.g. [Heroku](#heroku)), or serverless platform (e.g. [AWS lambda](#aws-lambda)).
+Nuggan can be easily deployed as a standalone service, or serverless platform (e.g. [AWS lambda](#aws-lambda)).
 
 It's recommended to access a deployed Nuggan through a [CDN](https://en.wikipedia.org/wiki/Content_delivery_network).
-
-### Heroku
-
-It can be deployed as web binary on Heroku.
-
-- Create an Heroku distribution: `./scripts/heroku-dist.sh`
-- [Push to an Heroku app](https://devcenter.heroku.com/articles/git) the content of the created distribution.
-
-*Example at [nuggan.herokuapp.com](https://nuggan.herokuapp.com/optimg/110/700/190/190/128/512/9/_2_L3BvcHRvY2F0X3YyLnBuZw==/image.png)*
 
 ### AWS Lambda
 

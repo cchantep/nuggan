@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: cchantep/golang:1.13-vips
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/cchantep/nuggan
 
     environment:
       TEST_RESULTS: /tmp/test-results
@@ -25,13 +25,13 @@ jobs:
 
       - run:
           name: Build
-          command: go build
+          command: CC="$PWD/scripts/cc-sse.sh" go build
 
       - run:
           name: Run tests
           command: |
             trap "go-junit-report <${TEST_RESULTS}/go-test.out > ${TEST_RESULTS}/go-test-report.xml" EXIT
-            go test nuggan | tee ${TEST_RESULTS}/go-test.out
+            CC="$PWD/scripts/cc-sse.sh" go test nuggan | tee ${TEST_RESULTS}/go-test.out
 
       - store_artifacts:
           path: /tmp/test-results
