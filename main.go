@@ -4,13 +4,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/davidbyttow/govips/pkg/vips"
 	"io"
 	"log"
 	"net/http"
 	"nuggan"
 	"os"
 	"strings"
+
+	"github.com/davidbyttow/govips/pkg/vips"
 )
 
 var (
@@ -206,7 +207,7 @@ func cliScaleDown(
 	writer, err := os.Create(output)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("Cannot create writer", err))
+		return errors.New(fmt.Sprintf("Cannot create writer: %v", err))
 	}
 
 	// ---
@@ -222,7 +223,7 @@ func cliScaleDown(
 	image, err := vips.LoadImage(reader)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("Cannot load image", err))
+		return errors.New(fmt.Sprintf("Cannot load image: %v", err))
 	}
 
 	// ---
