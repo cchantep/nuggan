@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: cchantep/golang:1.13-vips
+      - image: cchantep/golang:1.26-vips
     working_directory: /go/src/github.com/cchantep/nuggan
 
     environment:

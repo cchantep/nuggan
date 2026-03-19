@@ -86,7 +86,7 @@ If you're on an Apple Silicon host or your local libvips setup differs from CI r
 docker run --rm --platform linux/amd64 \
   -v "$PWD":/go/src/github.com/cchantep/nuggan \
   -w /go/src/github.com/cchantep/nuggan \
-  cchantep/golang:1.13-vips \
+  cchantep/golang:1.26-vips \
   /bin/sh -lc 'export PATH=/usr/local/go/bin:$PATH; go test -v nuggan'
 ```
 

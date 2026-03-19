@@ -1,2 +1,0 @@
-# Heroku binary deployment
-web: ./heroku.sh
