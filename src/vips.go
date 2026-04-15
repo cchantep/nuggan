@@ -16,7 +16,6 @@ import (
 // - y: Crop origin Y (>= 0)
 // - width: Crop width (or -1 if none)
 // - height: Crop height (or -1 if none)
-//
 func Crop(
 	input io.Reader,
 	x int,
@@ -90,7 +89,6 @@ func Crop(
 // - height: Resize height; Ignored if < 0 or > image height.
 // - compression: Compression level (>= 0 && <= 9);  Ignored if < 0.
 // - output: Result writer
-//
 func ScaleDown(
 	image *vips.ImageRef,
 	width int,

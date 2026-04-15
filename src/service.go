@@ -30,10 +30,9 @@ type ImageResponse struct {
 
 // Routes:
 //
-//   HEAD /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
+//	HEAD /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
 //
-//   GET  /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
-//
+//	GET  /:routePrefix/:cropX/:cropY/:cropWidth/:cropHeight/:resizeWidth/:resizeHeight/:compressionLevel/:base64Ref
 func Service(conf Config) func(*ImageRequest, *ImageResponse) {
 	decodeMediaUrl := DecodeMediaUrl(conf)
 
